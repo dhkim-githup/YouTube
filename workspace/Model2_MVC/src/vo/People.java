@@ -1,4 +1,4 @@
-package VO;
+package vo;
 
 /* People DB 에서 값을 받아 저장하고, View 에 던져주는 매개체 역할을 합니다. */
 public class People {
