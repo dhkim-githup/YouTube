@@ -4,12 +4,8 @@
 <%@ page import="java.util.*, vo.People" %>
 
 
-<%
-	
-	
-	List<People> list2 = (ArrayList<People>)request.getAttribute("people");
-
-	
+<%		
+	List<People> list2 = (ArrayList<People>)request.getAttribute("people");	
 %>
 
 
@@ -48,7 +44,7 @@
 				<td align="center"><%=p.getStrName()%></td>
 				<td align="center"><%=p.getStrAge()%></td>
 				<td align="center"><%=p.getStrDati()%></td>
-				<td><a href="/jsp/delete.jsp?id=<%=strId%>">삭제 </a></td>
+				<td><a href="/DeletePeople?id=<%=strId%>">삭제 </a></td>
 			</tr>	
 			<%			
 			}

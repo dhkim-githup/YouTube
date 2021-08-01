@@ -24,33 +24,17 @@ import comm.DbConn;
 /**
  * Servlet implementation class PeopleList
  */
-@WebServlet("/PeopleList")
-public class PeopleList extends HttpServlet {
+@WebServlet("/Model2_MVC/Test")
+public class Test extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
     
-    public PeopleList() {
+    public Test() {
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
-	    List<People> list = new ArrayList<>();
-	    
-	    PeopleService peopleService = new PeopleService();
-	    
-	    
-	    	list = peopleService.doSelect();
-			// 리스트의 값을 Attribute 를 통해 주고 받는다.
-			request.setAttribute("people", list);
-			
-			/* forward 방식 
-			 * List 의 값을 Attribute 를 통해 전달한다. 
-			 * */		
-			 RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/view/list.jsp");
-			 dispatcher.forward(request, response);
-		
-		
-		System.out.println("Hi Servlet Controller, Controller2");
+	  System.out.println("Hi - Test");
 	}
 
 	
