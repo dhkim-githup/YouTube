@@ -7,10 +7,10 @@
 <title>Insert title here</title>
 </head>
 <body>
-	Hello Jsp !!
+	Hello Jsp !! - Spring Hi
 	
 	<p>
 	
-	Hello Model2 MVC ^^^^^^^^^^^^^^^^^^
+	Hello Model2 Spring ^^^^^^^^^^^^^^^^^^
 </body>
 </html>

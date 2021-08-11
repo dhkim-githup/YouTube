@@ -1,0 +1,17 @@
+
+> DB 테이블 생성 
+
+CREATE TABLE "SCOTT"."PEOPLE" 
+   ( "ID" VARCHAR2(50 BYTE), 
+"NAME" VARCHAR2(100 BYTE), 
+"AGE" NUMBER(5,0), 
+"REG_DATE" DATE DEFAULT sysdate
+   )
+;
+
+
+> 샘플 데이타 생성 
+
+insert into people(id,name,age)
+VALUES ('myid','홍길동',30)
+;
