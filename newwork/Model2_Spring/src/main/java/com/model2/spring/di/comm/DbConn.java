@@ -1,4 +1,4 @@
-package com.model2.spring.pack.comm;
+package com.model2.spring.di.comm;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

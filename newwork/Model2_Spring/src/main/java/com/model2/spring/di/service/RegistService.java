@@ -1,4 +1,4 @@
-package com.model2.spring.pack.service;
+package com.model2.spring.di.service;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -6,15 +6,21 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.model2.spring.pack.comm.DbConn;
-import com.model2.spring.pack.vo.People;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
-public class PeopleService {
+import org.springframework.stereotype.Service;
+
+import com.model2.spring.di.comm.DbConn;
+import com.model2.spring.di.vo.People;
+
+@Service
+public class RegistService {
 	
-	List<People> list = new ArrayList<>();
 	
-	public List<People> doSelect(){
+	public int doInsert(String strID, String strName, String strAge){
 	
+		int intI =0;
 		Connection conn = null; // DB 에 connection 된 객체를 저장 
 	    PreparedStatement ps = null;  // connection 객체에 실행문을 던지는 역할(창구)
 	    ResultSet rs = null;     // select 결과값을 받아옮
@@ -23,23 +29,24 @@ public class PeopleService {
 		conn = dbConn.getConn();
 				
 		 try{ 
-			    /* Result Set , Print */	
-				qry = " select id, name, age, to_char(reg_date,'yyyy.mm.dd') as dati " 
-					+" from people ";
+			   
+			 /* Result Set , Print */	
+				qry = " Insert into people(id, name, age) "
+					 +" values (? , ?, to_number(?))";
+			     
+				ps = conn.prepareStatement(qry);			
+				ps.setString(1, strID);
+				ps.setString(2, strName);
+				ps.setString(3, strAge);			
 				
-				ps = conn.prepareStatement(qry);
-				rs = ps.executeQuery();
+				ps.executeUpdate();
 				
-				while(rs.next()) {
-					// Poeple 생성자를 이용하여 값을 입력 
-					People people = new People(rs.getString("id"), rs.getString("name"), rs.getString("age"), rs.getString("dati"));
-					list.add(people);				
-				}
+				System.out.println("ID "+strID+" 를 등록 했습니다.");
 				
-				System.out.println(list.size());
 				System.out.println("Model 2");
 			
 		   }catch (Exception e) {
+			    intI = 1;
 				System.out.println("Error =>"+e);			
 			 }finally {
 				 /* Close */ 
@@ -49,9 +56,11 @@ public class PeopleService {
 					if(conn != null) conn.close();			
 				}catch (Exception e2) {			
 				}
-			}				
-		
-		  return list;
+			}	
+		 
+		 return intI;
 	}
+	
+
 
 }

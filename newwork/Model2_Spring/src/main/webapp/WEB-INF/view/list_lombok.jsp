@@ -5,7 +5,7 @@
 
 
 <%		
-	List<People> list2 = (ArrayList<People>)request.getAttribute("people");	
+	List<People_lombok> list2 = (ArrayList<People_lombok>)request.getAttribute("people");	
 %>
 
 
@@ -36,7 +36,7 @@
 			String strId;
 	
 	try{
-			for(People p : list2){
+			for(People_lombok p : list2){
 				strId = p.getStrID();	
 			%>	
 				<tr style="height: 40px">

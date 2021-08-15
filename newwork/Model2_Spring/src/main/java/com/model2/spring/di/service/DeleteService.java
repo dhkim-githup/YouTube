@@ -1,4 +1,4 @@
-package com.model2.spring.pack.service;
+package com.model2.spring.di.service;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -6,13 +6,16 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.model2.spring.pack.comm.DbConn;
-import com.model2.spring.pack.vo.People;
+import org.springframework.stereotype.Service;
 
-public class RegistService {
+import com.model2.spring.di.comm.DbConn;
+import com.model2.spring.di.vo.People;
+
+@Service
+public class DeleteService {
 	
 	
-	public int doInsert(String strID, String strName, String strAge){
+	public int doDelete(String strID){
 	
 		int intI =0;
 		Connection conn = null; // DB 에 connection 된 객체를 저장 
@@ -23,21 +26,17 @@ public class RegistService {
 		conn = dbConn.getConn();
 				
 		 try{ 
-			   
-			 /* Result Set , Print */	
-				qry = " Insert into people(id, name, age) "
-					 +" values (? , ?, to_number(?))";
-			     
+			       
+			     /* Result Set , Print */	
+				qry = " delete from people where id=?";
+				 
 				ps = conn.prepareStatement(qry);			
 				ps.setString(1, strID);
-				ps.setString(2, strName);
-				ps.setString(3, strAge);			
 				
 				ps.executeUpdate();
 				
-				System.out.println("ID "+strID+" 를 등록 했습니다.");
-				
-				System.out.println("Model 2");
+				System.out.println("ID "+strID+" 를 삭제 했습니다.");				
+				System.out.println("Model 2, doDelete");
 			
 		   }catch (Exception e) {
 			    intI = 1;
