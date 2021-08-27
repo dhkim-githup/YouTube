@@ -53,7 +53,7 @@ public class DeletePeople {
 			
 		System.out.println("Hi DeletePeople - Model2_Spring_War");	
 		
-		return "list";
+		return "di/list";
 	
 	}
 

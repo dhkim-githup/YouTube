@@ -45,7 +45,7 @@ public class PeopleList {
 			
 			System.out.println("Hi Spring - DI - Model2_Spring_War");	
 		
-		return "list";
+		return "di/list";
 		//return "/WEB-INF/view/list.jsp";
 	
 	}
@@ -65,7 +65,7 @@ public class PeopleList {
 			
 			System.out.println("Hi Spring - Lombok ");	
 		
-		return "list_lombok";
+		return "di/list_lombok";
 		//return "/WEB-INF/view/list.jsp";
 	
 	}

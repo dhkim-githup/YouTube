@@ -55,7 +55,7 @@ public class RegistPeople {
 			
 		System.out.println("Hi RegistPeople - Model2_Spring_War");	
 		
-		return "list";
+		return "di/list";
 	
 	}
 
