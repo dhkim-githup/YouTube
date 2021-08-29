@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.model2.spring.mybatis.dao.Dao_If_People"> 
+    
+    <select id="doReadList" resultType="com.model2.spring.vo.Vo_People">
+         select id, name, age, to_char(reg_date,'yyyy.mm.dd') as dati
+		  from people
+		  order by id
+    </select>
+
+    <select id="doReadId" resultType="com.model2.spring.vo.Vo_People">
+        select id, name, age, to_char(reg_date,'yyyy.mm.dd') as dati 
+			from people
+			where id = #{param1}
+    </select>
+
+    <insert id="doCreate">
+        Insert into people(id, name, age)
+		 values (#{param1} , #{param2}, to_number(#{param3}))
+    </insert>
+
+    <update id="doUpdate" parameterType="com.model2.spring.vo.Vo_People">
+        Update people 
+		SET name = #{name} , age = to_number(#{age})
+		WHERE id = #{id}        
+    </update>
+    
+    <delete id="doDelete">
+    	Delete from people 
+		WHERE id = #{param1}
+    </delete>
+    
+</mapper>
