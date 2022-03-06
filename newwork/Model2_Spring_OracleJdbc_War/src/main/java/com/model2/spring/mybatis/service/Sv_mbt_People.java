@@ -4,11 +4,13 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.model2.spring.mybatis.dao.Dao_If_People;
 import com.model2.spring.vo.Vo_People;
 
 @Service
+@Transactional
 public class Sv_mbt_People implements Sv_mbt_IfPeople {
 	
 	Dao_If_People dao_People;
@@ -62,7 +64,7 @@ public class Sv_mbt_People implements Sv_mbt_IfPeople {
 	}
 
 	/* ID 를 삭제하는 메서드 */
-	@Override
+	@Override	
 	public int doDelete(String id) {
 
 		int intI = dao_People.doDelete(id);
