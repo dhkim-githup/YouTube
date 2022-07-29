@@ -1,0 +1,8 @@
+DB - Oracle
+
+ CREATE TABLE "SCOTT"."PEOPLE" 
+   (	"ID" VARCHAR2(50 BYTE), 
+	"NAME" VARCHAR2(100 BYTE), 
+	"AGE" NUMBER(5,0), 
+	"REG_DATE" DATE DEFAULT sysdate
+   );

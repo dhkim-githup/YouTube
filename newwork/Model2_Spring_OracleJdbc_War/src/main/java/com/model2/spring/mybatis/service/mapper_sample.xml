@@ -1,0 +1,561 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.happynarae.bp.havisbp.dao.esign.EsignMapper">
+
+	<!-- 계약조회 list -->
+	<select id="selectEsignList" resultType="com.happynarae.bp.havisbp.model.esign.EsignDTO">
+		SELECT
+			A.ECON_NUM,
+			A.CONT_TY,
+			(
+				SELECT
+					X.HAN_NM
+				FROM
+					COMM_CD X
+				WHERE
+					X.CD_FLAG = '647'
+					AND X.COMM_CD = A.CONT_TY ) AS ECON_TY_NM,
+			A.CONT_NM,
+			CASE
+				WHEN A.PROC_TY IN ('001', '002', '003', '004', '005', '006', '007') THEN TO_CHAR (SYSDATE, 'YYYY-MM-DD')
+				ELSE TO_CHAR (A.CONT_DATE, 'YYYY-MM-DD')
+			END AS CONT_DATE,
+			A.PROC_TY,
+			(
+				SELECT
+					X.HAN_NM
+				FROM
+					COMM_CD X
+				WHERE
+					X.CD_FLAG = '652'
+					AND X.COMM_CD = A.PROC_TY) AS PROC_TY_NM,
+			A.REQ_OGN_CD,
+			(
+				SELECT
+					OGN_HAN_NM
+				FROM
+					OGN
+				WHERE
+					ENPRI_CD = '000001'
+					AND OGN_CD = A.REQ_OGN_CD )AS REQ_OGN_NM,
+			A.REQ_MAN,
+			P_GET.F_CUST(A.REQ_MAN,'004') AS REQ_MAN_NM,
+			A.FORM_TY,
+			(
+				SELECT
+					X.HAN_NM
+				FROM
+					COMM_CD X
+				WHERE
+					X.CD_FLAG = '648'
+					AND X.COMM_CD = A.FORM_TY) AS FORM_TY_NM,
+			A.FORM_DATA,
+			A.MOD_MAN,
+			P_GET.F_CUST(A.MOD_MAN,'004') AS MOD_MAN_NM,
+			TO_CHAR (A.MOD_DATE,'YYYY-MM-DD') MOD_DATE,
+			A.MOD_DATE AS MOD_DATE_OR,
+			A.REG_MAN,
+			P_GET.F_CUST(A.REG_MAN,'004') AS REG_MAN_NM,
+			TO_CHAR (A.REG_DATE,'YYYY-MM-DD') REG_DATE,
+			A.REG_DATE AS REG_DATE_OR,
+			B.SCO_CD,
+			B.MEMB_CD,
+			A.REF_ECON_NUM
+		FROM
+			ECON_INFO A,
+			ECON_DTL B
+		WHERE
+			A.ECON_NUM = B.ECON_NUM
+			AND A.STAT_FLAG = '001'
+			AND B.STAT_FLAG = '001'
+			AND A.ECON_NUM = B.ECON_NUM
+			AND B.SCO_CD = #{scoCd}
+			AND B.MEMB_CD = 1
+			AND A.PROC_TY != '012'
+		<if test='searchEconNum  != null and !"".equals(searchEconNum)'>
+			AND UPPER(A.ECON_NUM) LIKE '%'||UPPER(#{searchEconNum})||'%'
+		</if>
+		<if test='searchContNm  != null and !"".equals(searchContNm)'>
+			AND A.CONT_NM LIKE '%'||#{searchContNm}||'%'
+		</if>
+		<if test='searchProcTy  != null and !"".equals(searchProcTy)'>
+			AND A.PROC_TY = #{searchProcTy}
+		</if>
+		<if test='startDate != null and !"".equals(startDate)'>
+			AND A.REG_DATE <![CDATA[>=]]> TO_DATE(#{startDate}, 'YYYY-MM-DD' )
+		</if>
+		<if test='endDate != null and !"".equals(endDate)'>
+			AND A.REG_DATE <![CDATA[<]]>TO_DATE(#{endDate}, 'YYYY-MM-DD' ) + 1
+		</if>
+		<if test='"009".equals(searchContEndDate)'>									<!-- 메인 대시보드에서 넘어온 계약만기예정 조건 -->
+			AND B.CONT_END_DATE IS NOT NULL
+			AND (B.CONT_END_DATE - SYSDATE) <![CDATA[<]]> 30
+			AND (B.CONT_END_DATE - SYSDATE) <![CDATA[>=]]> 0
+		</if>
+
+		<choose>
+			<when test='sidx == null or "".equals(sidx)'>
+				ORDER BY
+					A.MOD_DATE DESC,
+					B.COP_NM,
+					A.ECON_NUM
+			</when>
+			<when test='"reg_Date".equals(sidx)'>
+				ORDER BY REG_DATE_OR ${sord}
+			</when>
+			<when test='"mod_Date".equals(sidx)'>
+				ORDER BY MOD_DATE_OR ${sord}
+			</when>
+			<otherwise>
+				ORDER BY ${sidx} ${sord}
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="selectProdEsignList" resultType="com.happynarae.bp.havisbp.model.esign.EsignDTO">
+		SELECT
+			tc.MST_CONT_NUM AS MST_CONT_NUM, -- 원계약번호
+			tc.CONT_NUM AS CONT_NUM, -- 종속계약번호
+			tc.CONT_NM AS CONT_NM, -- 계약명
+			TO_CHAR(tc.CONT_DATI,'YYYY-MM-DD') AS CONT_DATI, -- 계약일자
+			TO_CHAR(tc.CONT_STA_DATI,'YYYY-MM-DD') AS CONT_STA_DATI, -- 계약시작일자
+			TO_CHAR(tc.CONT_END_DATI,'YYYY-MM-DD') AS CONT_END_DATI, -- 계약종료일자
+			tc.REG_MAN AS REQ_MAN, -- 행복나래 담당자 코드
+			( SELECT cd.CUST_NM FROM CUST_DTL cd WHERE cd.CUST_ID = tc.REG_MAN ) AS REQ_MAN_NM, -- 행복나래담당자
+			tc.RJCT_RSN -- 비고 ( 계약거부 사유할때 필수로 입력되나, 추후 협력사가 입력할 수 있는 비고 기능으로 용도 추가됨 )
+			, DECODE(tc.PROC_TY,'001','유효','006','반영대기','004','미체결','종료') AS PROC_TY_NM
+			, tc.CONT_GUBUN
+		FROM T_CONT tc
+		WHERE tc.SCO_CD = #{scoCd}
+		AND tc.CONT_NUM LIKE 'CT%'
+		<if test='startDate != null and !"".equals(startDate)'>
+			AND tc.CONT_STA_DATI <![CDATA[>=]]> TO_DATE(#{startDate}, 'YYYY-MM-DD HH:MI:SS' )
+		</if>
+		<if test='endDate != null and !"".equals(endDate)'>
+			AND tc.CONT_STA_DATI <![CDATA[<]]>TO_DATE(#{endDate}, 'YYYY-MM-DD HH:MI:SS' ) + 1
+		</if>
+		<if test='custId  != null and !"".equals(custId)'>
+			AND tc.REG_MAN = #{custId}
+		</if>
+		<if test='"Y".equals(searchContEndYn)'>
+			AND tc.CONT_END_DATI IS NOT NULL
+			AND (tc.CONT_END_DATI - SYSDATE) <![CDATA[<]]> 90
+			AND (tc.CONT_END_DATI - SYSDATE) <![CDATA[>=]]> 0
+		</if>
+		<if test='searchMultyCd  != null and !"".equals(searchMultyCd)'>
+			AND tc.PROC_TY IN
+		  	<foreach collection="arrParam" item="arr" open="(" close=")" separator=",">
+				#{arr}
+			</foreach>
+		</if>
+		<if test='searchMultyCd  == null or "".equals(searchMultyCd)'>
+		  AND 1=0
+		</if>
+		<if test='searchType  != null and !"".equals(searchType) and searchText != null and !"".equals(searchText)' >
+			<choose>
+				<when test='searchType.equals("003")'>
+					AND tc.MST_CONT_NUM LIKE '%' ||  #{searchText} || '%'
+				</when>
+				<when test='searchType.equals("006")'>
+					AND tc.CONT_NUM LIKE '%' ||  #{searchText} || '%'
+				</when>
+				<when test='searchType.equals("008")'>
+					AND tc.CONT_NM LIKE '%' ||  #{searchText} || '%'
+				</when>
+				<otherwise>
+					AND tc.REG_MAN IN (
+					    SELECT cd.CUST_ID
+					    FROM CUST_DTL cd
+					    WHERE cd.CUST_NM LIKE '%' ||  #{searchText} || '%'
+					)
+				</otherwise>
+			</choose>
+		</if>
+		order by tc.mst_cont_num asc, tc.cont_num asc
+	</select>
+
+	<select id="selectContractHistoryList" resultType="com.happynarae.bp.havisbp.model.esign.EsignDTO">
+		SELECT
+			( SELECT cc.HAN_NM FROM COMM_CD cc WHERE cc.CD_FLAG = '799' AND cc.COMM_CD = tch.CONT_HIS_CODE ) AS HIS_NM, -- 상태
+			tch.CONT_NUM AS CONT_NUM, -- 관련 계약번호
+			COALESCE(( SELECT cd.CUST_NM FROM CUST_DTL cd WHERE cd.CUST_ID = tch.HIS_MAN ), '시스템') HIS_MAN_NM, -- 처리자
+			TO_CHAR(tch.HIS_DATI,'YYYY-MM-DD HH24:MI:SS') AS HIS_DATI, -- 처리일시
+			tch.BIGO AS BIGO -- 비고
+		FROM T_CONT_HIS tch
+		WHERE tch.MST_CONT_NUM = #{searchMstContNum}
+		AND tch.CONT_HIS_CODE IN ('004', '005', '011')
+		ORDER BY tch.HIS_SEQ
+	</select>
+
+	<select id="selectContractInfoList" resultType="com.happynarae.bp.havisbp.model.esign.EsignDTO">
+		SELECT CONT_NUM, CONT_NM , LEVEL||'차' AS LEV, PROC_TY, CONT_GUBUN, CONT_YN, MST_CONT_NUM, SCO_CD, REG_MAN
+		FROM (
+				 SELECT tc.CONT_NUM, tc.CONT_NM, tc.MST_CONT_NUM
+				      , tc.OLD_CONT_NUM, tc.PROC_TY, tc.CONT_GUBUN
+					  , NVL2(tc.CONT_OPTION, 'Y', 'N') AS CONT_YN
+					  , tc.SCO_CD, tc.REG_MAN
+				 FROM T_CONT tc
+				 WHERE MST_CONT_NUM = #{searchMstContNum}
+				 AND tc.PROC_TY IN ('001','004','006','007')
+		    	 AND tc.RJCT_RSN IS NULL
+			 )
+			CONNECT BY PRIOR CONT_NUM = OLD_CONT_NUM
+		START WITH CONT_NUM = MST_CONT_NUM
+		ORDER BY LEVEL DESC
+	</select>
+
+	<select id="selectAttachFileList" resultType="com.happynarae.bp.havisbp.model.esign.EsignDTO">
+		SELECT trf.REF_FILE_NM,
+			   NVL2(trf.FILE_RUTE, trf.FILE_RUTE , 'NODELETE') AS FILE_PATH,
+			   NVL(trf.FILE_ALLURL_RUTE, trf.FILE_URL_RUTE ) AS FILE_URL,
+			   trf.DEST_NUM,
+			   trf.DEST_SEQ,
+			   trf.REF_TY,
+			   trf.SCO_OPEN,
+			   trf.CUST_OPEN
+		FROM TOT_REF_FILE trf
+		WHERE trf.SCO_OPEN = 'Y'
+		AND trf.DEST_NUM = #{searchContNum}
+	</select>
+
+	<select id="selectGuaranteeFileFileList" resultType="com.happynarae.bp.havisbp.model.esign.EsignDTO">
+		SELECT
+			COALESCE ( tcg.SCO_CHK, 'N' ) AS SCO_CHK, -- 협력사 제출
+			COALESCE ( tcg.HN_CHK, 'N' ) AS HN_CHK, -- 행복나래 최종확인
+			( SELECT cc.HAN_NM FROM COMM_CD cc WHERE cc.CD_FLAG = '804' AND cc.COMM_CD = tcg.GRNT_TYPE ) AS GRNT_NM -- 보증 구분
+			, NVL(GRNT_ENPRI_CD,'000') AS GRNT_ENPRI_CD --보험사
+			, NVL(GRNT_NUM_TYPE,'000') AS GRNT_NUM_TYPE --증권 서사함
+			, GRNT_NUM AS GRNTNUM --증권 서사함 번호
+			, (	SELECT COUNT(*)
+				FROM TOT_REF_FILE trf
+				WHERE trf.DEST_NUM = tcg.CONT_NUM
+				AND trf.FILE_KN = tcg.GRNT_TYPE
+			) AS APPENT_COUNT
+		FROM T_CONT_GRNT tcg
+		WHERE tcg.CONT_NUM = #{searchContNum}
+	</select>
+
+	<select id="procContractSign"  statementType="CALLABLE" parameterType="hashMap">
+		{CALL P_CONT.SP_CONFIRM_CONT_SCO (
+				#{searchContNum}
+		    	, #{sendType}
+		    	, #{custId}
+		    	, #{profMemo}
+		    	, #{dndata}
+		        , #{signData}
+				, #{rRtn, jdbcType=VARCHAR, mode=OUT}
+		    	, #{rMsg, jdbcType=VARCHAR, mode=OUT}
+			)
+		}
+	</select>
+
+	<select id="selectContactInfo" resultType="com.happynarae.bp.havisbp.model.esign.EsignDTO">
+		SELECT MST_CONT_NUM
+			 , CONT_NUM
+			 , CONT_DATI
+			 , DECODE(PROC_NM, '대기', '반영대기', PROC_NM) AS PROC_NM
+			 , CONT_STA_DATI
+			 , CONT_END_DATI
+			 , CONT_NM
+			 , CONT_YN
+			 , PROC_TY
+			 , CONT_GUBUN
+		FROM (
+				 SELECT tc.MST_CONT_NUM                                                    AS MST_CONT_NUM,  -- 원계약번호
+						tc.CONT_NUM                                                        AS CONT_NUM,      -- 종속계약번호
+						TO_CHAR(tc.CONT_DATI, 'YYYY-MM-DD')                                AS CONT_DATI,     -- 계약일자,
+						DECODE(tc.PROC_TY, '001', '유효', '006', '반영대기', '004', '미체결', '종료') AS PROC_NM,       -- 상태구분
+						TO_CHAR(tc.CONT_STA_DATI, 'YYYY-MM-DD')                            AS CONT_STA_DATI, -- 계약시작일자,
+						TO_CHAR(tc.CONT_END_DATI, 'YYYY-MM-DD')                            AS CONT_END_DATI, -- 계약종료일자,
+						tc.CONT_NM                                                         AS CONT_NM        -- 계약명
+						, NVL2(tc.CONT_OPTION, 'Y', 'N')                                     AS CONT_YN
+						, tc.PROC_TY
+						, tc.CONT_GUBUN
+				 FROM T_CONT tc
+				 WHERE tc.CONT_NUM = #{searchContNum}
+			 )
+	</select>
+
+	<select id="selectAvalidProdList" resultType="com.happynarae.bp.havisbp.model.esign.EsignDTO">
+		SELECT tcd.CONT_NUM                                                  AS CONT_NUM,    -- 계약번호,
+			   ROWNUM                                                        AS ITEM_NO,     -- 아이템번호,
+			   tcd.PRD_CD                                                    AS PRD_CD,      -- 상품코드,
+			   (SELECT pl.HAN_NM FROM PLIS pl WHERE pl.PLIS_CD = pi.PLIS_CD) AS PLIS_NM,     -- 품명,
+			   pi.SHRT_DOC                                                   AS SPEC,        -- SPEC,
+			   pi.TMK_HANG_NM,                                                               --브랜드
+			   pi.MAKE_CO_NM                                                 AS MAKE_CO_NM,  -- 제조사
+			   pi.MDL_HANG_NM                                                AS MDL_HANG_NM, -- 모델명,
+			   pi.UNIT                                                       AS UNIT,        -- 단위,
+			   tcd.BUY_PRI                                                   AS BUY_PRI,     -- 계약단가,
+			   DECODE(tcd.DELI_TY, '002', 'S/D', 'M/D')                      AS DELI_NM,     -- 대표배송방법
+			   pi.deli_day_fr_balju                                                          -- 표준납기일
+		FROM T_CONT_DTL tcd,
+			 PRD_INFO pi
+		WHERE tcd.CONT_NUM = #{searchContNum}
+		  AND tcd.PRD_CD = pi.PRD_CD
+		  AND pi.STAT_FLAG = '001'
+	</select>
+
+	<select id="selectGrntEnpri" resultType="com.happynarae.bp.havisbp.model.common.CodeDTO">
+		SELECT '000' AS CODE, '보험사선택' AS NAME
+		FROM DUAL
+		UNION ALL
+		SELECT GRNT_ENPRI_CD AS CODE, GRNT_COP_NM AS NAME
+		FROM T_GRNT_ENPRI
+	</select>
+
+	<select id="selectCodeList" resultType="com.happynarae.bp.havisbp.model.common.CodeDTO">
+		SELECT '000' AS CODE, '직접입력' AS NAME
+		FROM DUAL
+		UNION ALL
+		SELECT COMM_CD AS CODE
+			 , HAN_NM  AS NAME
+		FROM COMM_CD
+		WHERE CD_FLAG = '798'
+		  AND STAT_FLAG = '001'
+		  AND COMM_CD <![CDATA[<>]]> '000'
+
+	</select>
+
+	<!--보증보험 제출하기-->
+	<update id="updateContGrnt" >
+		UPDATE T_CONT_GRNT
+			SET_CHK='Y'
+			,  GRNT_ENPRI_CD = #{grntEnpriCd}
+			, GRNT_NUM_TYPE = #{grntNmType}
+			, GRNT_NUM = #{grntNm}
+			, SUBMIT_MAN = #{custId}
+			, SUBMIT_DATI = SYSDATE
+		WHERE CONT_NUM = #{contNum}
+		AND GRNT_TYPE = #{grntType}
+	</update>
+
+	<select id="funcDhAddTotRefFile"  statementType="CALLABLE" parameterType="hashMap">
+		{CALL P_ATTACH_MNG.F_DN_ADD_TOT_REF_FILE (
+					#{mDEST_NUM}
+					, #{mDEST_SEQ}
+					, #{mREF_TY}
+					, #{mENPRI_CD}
+					, #{mREF_FILE_NM}
+					, #{mFILE_RUTE}
+					, #{mFILE_URL_RUTE}
+					, #{mSER_FILE_NM}
+					, #{mREG_MAN}
+					, #{mSCO_OPEN}
+					, #{mCUST_OPEN}
+		    		, ''
+		    		, 'IMAGE'
+					, #{mScoCd}
+				)
+		}
+	</select>
+
+	<update id="updateTotFileTable" parameterType="hashMap">
+		UPDATE TOT_REF_FILE
+		SET STAT_FLAG = '001'
+		  , FILE_KN   =  #{aFileKn}
+		WHERE DEST_NUM = #{mDEST_NUM}
+		  AND REF_TY   = #{mREF_TY}
+		  AND STAT_FLAG IS NULL
+	</update>
+
+	<select id="selectEsignDetail"  resultType="hashMap" parameterType="hashMap">
+		SELECT A.ECON_NUM
+			 ,A.CONT_TY
+			 ,(    SELECT X.HAN_NM
+				   FROM COMM_CD X
+				   WHERE X.CD_FLAG = '647'
+					 AND X.COMM_CD = A.CONT_TY
+			  ) as CONT_TY_NM -- 팝업 상단 제목
+			 ,A.CONT_NM    --계약서명
+			 ,CASE WHEN A.PROC_TY IN ('001','002','003','004','005','006','007')
+					   THEN TO_CHAR(SYSDATE, 'yyyy-mm-dd')
+				   ELSE TO_CHAR(A.CONT_DATE, 'yyyy-mm-dd')
+			  END CONT_DATE -- AS-IS 동일 계약일자
+			 ,A.PROC_TY
+			 ,(SELECT X.HAN_NM FROM COMM_CD X WHERE X.CD_FLAG = '652' AND X.COMM_CD = A.PROC_TY) PROC_TY_NM
+			 ,B.COP_NM
+			 ,B.THIS_BSHOP_NM
+			 ,B.REGI_ADDR
+			 ,B.CEO_NM
+			 ,A.FORM_NUM
+			 ,A.FORM_TY
+			 ,(SELECT X.HAN_NM FROM COMM_CD X WHERE X.CD_FLAG = '648' AND X.COMM_CD = A.FORM_TY) FORM_TY_NM
+			 ,A.FORM_DATA
+			 ,A.REG_MAN
+		FROM ECON_INFO A, ECON_DTL B
+		WHERE A.ECON_NUM = B.ECON_NUM
+		  AND A.STAT_FLAG = '001'
+		  AND B.STAT_FLAG = '001'
+		  AND A.ECON_NUM = #{econNum}
+	</select>
+
+	<select id="selectEsignFileList" resultType="hashMap" parameterType="hashMap">
+
+			SELECT A.ECON_NUM
+				 ,A.FORM_DATA AS FORMDATA
+				 ,CASE WHEN (CASE WHEN A.REG_DATE >= TO_DATE('2013-11-01', 'YYYY-MM-DD') THEN 1 ELSE 0 END) +
+							(SELECT COUNT(*) FROM ECON_FILE X WHERE X.ECON_NUM = A.ECON_NUM AND X.FILE_BIN IS NULL AND X.FILE_TY = '008' AND ROWNUM = 1) = 2
+						   THEN B.FORM_FILE_PATH || B.FORM_FILE_NM ELSE B.FORM_FILE_PATH || REPLACE(B.FORM_FILE_NM,'new','old') END formfilenm
+				 ,CASE WHEN EXISTS ( SELECT 'Y' FROM ECON_SIGN X WHERE X.SIGN_NUM = A.SIGN_NUM ) THEN 'Y' ELSE 'N' END SIGNYN
+				 ,A.PROC_TY
+				 ,(SELECT X.FILE_PATH||X.SYS_FILE_NM FROM ECON_FILE X WHERE X.ECON_NUM = A.ECON_NUM AND X.FILE_TY = '008') AS CERT_FILE_PATH
+				 ,CASE WHEN A.PROC_TY NOT IN ('001','002','003','004','005','006','007') THEN TO_CHAR(A.CONT_DATE, 'YYYYMMDD') ELSE TO_CHAR(SYSDATE, 'YYYYMMDD') END CONT_DATE
+			FROM ECON_INFO A, ECON_FORM B
+			WHERE A.ECON_NUM = #{econNum}
+			  AND A.FORM_NUM = B.FORM_NUM
+			  AND A.STAT_FLAG = '001'
+
+	</select>
+
+	<select id="procEconSign"  statementType="CALLABLE" parameterType="hashMap">
+		{CALL P_ECON_MNG.SP_ECON_SIGN (
+				#{sEconNum}
+				, #{sFormData}
+				, #{sDn}
+				, #{sHashData}
+				, #{sSignData}
+				, #{sSignMan}
+				, #{sFilePath}
+				, #{sFileNm}
+				, #{sSysFileNm}
+				, #{sFileTy}
+				, #{rRtn, jdbcType=VARCHAR, mode=OUT}
+				, #{rMsg, jdbcType=VARCHAR, mode=OUT}
+			)
+		}
+	</select>
+
+	<select id="procEconModConfirm"  statementType="CALLABLE" parameterType="hashMap">
+		{CALL P_ECON_MNG.SP_ECON_MOD_CONFIRM (
+			#{sEconNum}
+			, #{sProcTy}
+			, #{sRegMan}
+			, #{rRtn, jdbcType=VARCHAR, mode=OUT}
+			, #{rMsg, jdbcType=VARCHAR, mode=OUT}
+			)
+		}
+	</select>
+
+	<update id="updateEconInfo" parameterType="hashMap">
+		UPDATE ECON_INFO
+		SET MOD_MAN = #{custId}
+			, MOD_MAN_NM = #{custNm}
+			, MOD_DATE = SYSDATE
+		<if test='formData  != null and !"".equals(formData)'>
+		    , FORM_DATA = #{formData}
+		</if>
+		<if test='sysMemo  != null and !"".equals(sysMemo)'>
+			, SYS_MEMO = '계약체결시 현재일자료 계약일자 변경'
+		</if>
+		WHERE ECON_NUM = #{sEconNum}
+	</update>
+
+	<select id="selectEconInfo" resultType="hashMap" parameterType="hashMap">
+		SELECT ei.ECON_NUM,ei.CONT_TY,ei.CONT_NM
+			 ,TO_CHAR(ei.CONT_DATE,'yyyymmdd') CONT_DATE,TO_CHAR(ei.SACC_REQ_DATE,'yyyymmdd') SACC_REQ_DATE
+			 ,ei.PROC_TY,ei.REQ_OGN_CD,ei.REQ_OGN_NM,ei.REQ_MAN,ei.REQ_MAN_NM
+			 ,ei.REF_ECON_NUM,ei.APPROVE_NO,ei.FORM_NUM,ei.FORM_TY,ei.FORM_DATA,ei.TAG_NUM,ei.SIGN_NUM,ei.MOD_REASON
+			 ,ed.SCO_CD,ed.MEMB_CD,ed.COP_NM,ed.THIS_BSHOP_NM,ed.BUSI_MAN_NUM,ed.REGI_ADDR
+			 ,ed.CEO_NM,ed.TEL_NUM,ed.SVR_MAN_ID,ed.SVR_MAN_NM
+			 ,TO_CHAR(ed.CONT_STA_DATE,'yyyymmdd') as CONT_STA_DATE,TO_CHAR(ed.CONT_END_DATE,'yyyymmdd') as CONT_END_DATE
+			 ,ed.CONT_PRI,ed.CRNC_TY,ed.PROVI_COND,ed.FILE_NUM,ed.CONT_COND,ed.SPCL_COND
+			 ,ed.INSU_RATE,ed.DELAY_RATE,ed.WRNT_RATE,ed.WRNT_DAY,ed.WRNT_PROD,ed.SYS_MEMO
+			 ,ed.MOD_MAN,ed.MOD_MAN_NM,TO_CHAR(ed.MOD_DATE,'yyyymmdd') as MOD_DATE
+			 ,ed.REG_MAN,ed.REG_MAN_NM,TO_CHAR(ed.REG_DATE,'yyyymmdd') as REG_DATE,ed.STAT_FLAG
+			 ,TO_CHAR(EI.CONT_DATE,'yyyy') as CONT_DATE_YY
+			 ,TO_CHAR(EI.CONT_DATE,'mm') as CONT_DATE_MM
+			 ,TO_CHAR(EI.CONT_DATE,'dd') as CONT_DATE_DD
+		FROM (SELECT ei.ECON_NUM,ei.CONT_TY,ei.CONT_NM,
+					 CASE WHEN ei.PROC_TY IN ('001','002','003','004','005','006','007') THEN SYSDATE ELSE ei.CONT_DATE end CONT_DATE,
+					 ei.SACC_REQ_DATE,ei.PROC_TY,ei.REQ_OGN_CD,ei.REQ_OGN_NM,ei.REQ_MAN,ei.REQ_MAN_NM,ei.REF_ECON_NUM,ei.APPROVE_NO,
+					 ei.FORM_NUM,ei.FORM_TY,ei.FORM_DATA,ei.TAG_NUM,ei.SIGN_NUM,ei.MOD_REASON
+			  FROM ECON_INFO EI WHERE ei.econ_num = #{econNum}) ei
+		   ,ECON_DTL ed
+		WHERE 1=1
+		AND ei.ECON_NUM = ed.ECON_NUM
+	</select>
+
+	<select id="selctEconFileInfo" parameterType="hashMap" resultType="hashMap">
+
+		SELECT T1.*,V1.FILESEQ, V1.FILENM, V1.SYSFILENM
+		FROM (
+			SELECT A.econ_num
+				 , A.form_data AS formData
+			     , B.FORM_DFLT_DATA
+				 ,CASE WHEN (CASE WHEN A.REG_DATE >= TO_DATE('2013-11-01', 'YYYY-MM-DD') THEN 1 ELSE 0 END) +
+							(SELECT COUNT(*) FROM econ_file x WHERE x.econ_num = A.econ_num AND x.file_bin IS NULL AND x.file_ty = '008' AND ROWNUM = 1) = 2
+						   THEN b.form_file_path || b.form_file_nm ELSE b.form_file_path || REPLACE(b.form_file_nm,'new','old') END formFileNm
+				 ,CASE WHEN EXISTS ( SELECT 'Y' FROM econ_sign x WHERE x.sign_num = A.sign_num ) THEN 'Y' ELSE 'N' END signYn
+				 ,A.proc_ty
+				 ,(SELECT x.file_path||x.sys_file_nm FROM econ_file x WHERE x.econ_num = A.econ_num AND x.file_ty = '008') cert_file_path
+				 ,case when a.proc_ty not in ('001','002','003','004','005','006','007') then to_char(a.cont_date, 'yyyymmdd') else to_char(sysdate, 'yyyymmdd') end cont_date
+			FROM econ_info A, econ_form b
+			WHERE 1=1
+			  AND A.ECON_NUM = #{econNum}
+			  AND A.form_num = b.form_num
+			  AND A.stat_flag = '001'
+		) T1
+		   , XMLTABLE(#{xmlKey} PASSING XMLTYPE(T1.FORM_DFLT_DATA) COLUMNS
+                            fileSeq VARCHAR(100) PATH'fileSeq'
+			,fileNM VARCHAR(100) PATH'fileNm'
+			,sysFileNm VARCHAR(100) PATH'sysFileNm') V1
+	</select>
+
+	<select id="selectEconDetailFile" parameterType="hashMap" resultType="hashMap">
+
+		SELECT SYS_FILE_NM
+			 , FILE_PATH|| SYS_FILE_NM AS FILE_ROOT
+		FROM ECON_FILE
+		WHERE ECON_NUM = #{econNum}
+	</select>
+
+	<select id="selectEconFile" resultType="hashMap"  parameterType="hashMap">
+		<![CDATA[
+		    SELECT EF.FILE_NUM, NVL(EF.FILE_SEQ, TO_NUMBER(CD.COMM_CD)) FILE_SEQ, EF.ECON_NUM, EF.FILE_PATH
+		          ,NVL(EF.FILE_NM, CD.HAN_NM) FILE_NM, EF.SYS_FILE_NM, NVL(EF.FILE_TY, CD.COMM_CD) FILE_TY, EF.REG_MAN, EF.REG_MAN_NM, EF.REG_DATE
+		          ,EF.FILE_BIN
+		      FROM (
+		            SELECT COMM_CD, HAN_NM
+		              FROM COMM_CD
+		             WHERE CD_FLAG = '649'
+		]]>
+		<if test='econ_file_ty == null and "".equals(econ_file_ty)'>
+			AND COMM_CD IN ('001','004','006','010','007','020','012')
+		</if>
+		<if test='econ_file_ty == "001001" '>
+			AND COMM_CD IN ('001','004','006','010','007','020','012')
+		</if>
+		<if test='econ_file_ty == "003001" '>
+			AND COMM_CD IN ('009')
+		</if>
+		<if test='econ_file_ty == "004001" '>
+			AND COMM_CD IN ('011')
+		</if>
+		<if test='econ_file_ty == "005001" '>
+			AND COMM_CD IN ('012')
+		</if>
+		<if test='econ_file_ty == "008001" '>
+			AND COMM_CD IN ('021')
+		</if>
+		<if test='econ_file_ty == "009001" '>
+			AND COMM_CD IN ('022')
+		</if>
+		<![CDATA[
+		           ) CD
+		          ,(
+		            SELECT FILE_NUM, FILE_SEQ, ECON_NUM, FILE_PATH
+		                  ,(SELECT X.HAN_NM FROM COMM_CD X WHERE X.CD_FLAG = '649' AND X.COMM_CD = EF.FILE_TY) FILE_NM
+		                  ,'http://121.78.69.199'||FILE_PATH||SYS_FILE_NM SYS_FILE_NM, FILE_TY, REG_MAN, REG_MAN_NM, REG_DATE
+		                  ,FILE_BIN
+		              FROM ECON_FILE EF
+		             WHERE FILE_NUM = #{FILE_NUM}
+		           ) EF
+		     WHERE 1=1
+		       AND CD.COMM_CD(+) = EF.FILE_TY
+		       AND EF.FILE_NUM IS NOT NULL
+		     ORDER BY NVL(EF.FILE_SEQ, TO_NUMBER(CD.COMM_CD))
+		]]>
+	</select>
+</mapper>
+

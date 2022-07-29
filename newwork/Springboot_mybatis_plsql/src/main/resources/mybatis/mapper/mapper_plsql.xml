@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.app.plsql.dao.DaoCallPlsqlMapper">
+
+    <select id="doCallPlsql" statementType="CALLABLE" parameterType="hashMap" >
+        { call PKG_REAL_ORD.PR_REAL_ORD_PARA (
+                #{pCST_ID}
+              , #{rRtn, jdbcType=VARCHAR, mode=OUT}
+              , #{rMsg, jdbcType=VARCHAR, mode=OUT}
+            )
+        }
+    </select>
+
+    <!-- parameterMap -->
+    <parameterMap id="pmapPR_REAL_ORD_PARA" type="hashMap">
+        <parameter property="pCST_ID" mode="IN" jdbcType="VARCHAR" javaType="java.lang.String" />
+        <parameter property="rRtn" mode="OUT" jdbcType="VARCHAR" javaType="java.lang.String"/>
+        <parameter property="rMsg" mode="OUT" jdbcType="VARCHAR" javaType="java.lang.String"/>
+    </parameterMap>
+    <select id="doCallPlsql2" statementType="CALLABLE" parameterMap="pmapPR_REAL_ORD_PARA">
+        {call PKG_REAL_ORD.PR_REAL_ORD_PARA( ?,?,?)}
+    </select>
+
+
+    <select id="doCallPlsql_PR_BATCH">
+        {
+            call PR_BATCH ()
+        }
+    </select>
+
+
+    <insert id="doInsert">
+        Insert into logs(memo,reg_day)
+        values ('mapper_People.xml',sysdate)
+    </insert>
+
+    <delete id="doDelete">
+        delete logs
+        where reg_day>to_number(sysdate-1)
+    </delete>
+
+</mapper>
