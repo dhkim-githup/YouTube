@@ -57,7 +57,13 @@ public class Member_List extends HttpServlet {
 		"<h1>  HTML -> Servlet  </h1>\n" +
 		"<a href='./index.html'>● Home </a>\n" +
 		"<p>\n" +
-		"<table style='width: 400px;'>\n");
+		"<table style='width: 400px;'>\n"+
+		"<tr style='height: 40px'>\n"+
+		"<th>No</th>\n"+
+		"<th align='center'>이름</th>\n"+
+		"<th align='center'>나이</th>\n"+
+		"<th align='center'>등록일자</th>\n"+			
+	    "</tr>\n");
 		try{
 				
 			/* Result Set , Print */	
@@ -71,10 +77,10 @@ public class Member_List extends HttpServlet {
 		
 		while(rs.next()) {
 			w.write("<tr>");			
-			w.write("<td>"+rs.getString("id")+"</td>");
+			w.write("<td align='center'>"+rs.getString("id")+"</td>");
 			w.write("<td align='center'>"+rs.getString("name")+"</td>");
 			w.write("<td align='center'>"+rs.getString("age")+"</td>");
-			w.write("<td><a href=\"/Servlet_Start/Delete?id="+rs.getString("id")+"\">삭제 </a></td>");
+			w.write("<td align='center'><a href=\"/2.Servlet_Start/Delete?id="+rs.getString("id")+"\">삭제 </a></td>");
 			w.write("</tr>");
 			}
 		}catch(Exception e){	

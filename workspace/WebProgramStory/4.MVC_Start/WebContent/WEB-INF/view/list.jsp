@@ -20,12 +20,12 @@
 
 <h1>  HTML -> Servlet -> Jsp -> MVC </h1>
 
- <a href="/MVC_Start/index.html">● Home </a>
+ <a href="/4.MVC_Start/index.html">● Home </a>
  <p>
 
- <table style="width: 400px;" border="0">
+ <table style="width: 600px;" border="0">
 		<tr style="height: 40px">
-			<td>ID</td>
+			<td align="center">ID</td>
 			<td align="center">이름</td>
 			<td align="center">나이</td>
 			<td align="center">등록일자</td>
@@ -40,11 +40,11 @@
 				strId = p.getStrID();
 			%>
 				<tr style="height: 40px">
-				<td><%=strId%></td>
+				<td align="center"><%=strId%></td>
 				<td align="center"><%=p.getStrName()%></td>
 				<td align="center"><%=p.getStrAge()%></td>
 				<td align="center"><%=p.getStrDati()%></td>
-				<td><a href="/MVC_Start/DeletePeople?id=<%=strId%>">삭제 </a></td>
+				<td><a href="/4.MVC_Start/DeletePeople?id=<%=strId%>">삭제 </a></td>
 			</tr>
 			<%
 			}

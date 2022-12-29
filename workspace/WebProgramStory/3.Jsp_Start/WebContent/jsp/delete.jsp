@@ -15,7 +15,7 @@
 
 <h1> ☞  HTML -> Servlet -> Jsp </h1>
 
- <a href="/Jsp_Start/index.html">● Home </a>
+ <a href="/3.Jsp_Start/index.html">● Home </a>
  <p>
  
 <%

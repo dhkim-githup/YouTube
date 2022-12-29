@@ -27,12 +27,12 @@
 
 <h1> ☞  HTML -> Servlet -> Jsp </h1>
 
- <a href="/Jsp_Start/index.html">● Home </a>
+ <a href="/3.Jsp_Start/index.html">● Home </a>
  <p>
  
- <table style="width: 400px;" border="0">
+ <table style="width: 600px;" border="0">
 		<tr style="height: 40px">
-			<td>ID</td>
+			<td align="center">ID</td>
 			<td align="center">이름</td>
 			<td align="center">나이</td>
 			<td align="center">등록일자</td>			
@@ -56,12 +56,12 @@
 				strId = rs.getString("id");
 			%>	
 				<tr style="height: 40px">
-				<td><%=strId%></td>
+				<td align="center"><%=strId%></td>
 				<td align="center"><%=rs.getString("name")%></td>
 				<td align="center"><%=rs.getString("age")%></td>
 				<td align="center"><%=rs.getString("dati")%></td>
 				<%-- <td><a href="/Jsp_Start/Delete?id=<%=strId%>">삭제 </a></td> --%>
-				<td><a href="/Jsp_Start/jsp/delete.jsp?id=<%=strId%>">삭제 </a></td>
+				<td align="center"><a href="/3.Jsp_Start/jsp/delete.jsp?id=<%=strId%>">삭제 </a></td>
 				
 			</tr>	
 			<%
